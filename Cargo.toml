@@ -1,6 +1,6 @@
 [package]
-name = "better_remove"
-version = "0.1.0"
+name = "brm"
+version = "1.0.0"
 edition = "2021"
 authors = [ "" ]
 
