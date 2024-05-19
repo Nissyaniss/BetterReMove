@@ -26,10 +26,10 @@ impl Default for Config {
             }
         };
         Config {
-            path_to_trash: String::from(format!(
+            path_to_trash: format!(
                 "{home_dir}/.local/share/BetterReMove/trash/",
                 home_dir = home_dir
-            )),
+            ),
         }
     }
 }
@@ -133,7 +133,7 @@ fn main() {
         return;
     }
 
-    if args.new_trash_path.clone() != None {
+    if args.new_trash_path.clone().is_some() {
         if args.new_trash_path.clone().unwrap().is_file() {
             println!("The new trash path must be a directory.");
             return;
@@ -167,7 +167,7 @@ fn check_config(config_file: PathBuf) -> String {
         })
         .unwrap();
     let mut trash_dir = String::from("null");
-    if !parsed_config.get("path_to_trash").is_none() {
+    if parsed_config.get("path_to_trash").is_some() {
         trash_dir = parsed_config
             .get("path_to_trash")
             .unwrap()
@@ -182,8 +182,8 @@ fn check_config(config_file: PathBuf) -> String {
         } else if PathBuf::from(&trash_dir).is_file() {
             println!("The trash path must be a directory.");
             return "null".to_string();
-        } else if !trash_dir.ends_with("/") {
-            trash_dir.push_str("/");
+        } else if !trash_dir.ends_with('/') {
+            trash_dir.push('/');
         }
     } else {
         println!("Error parsing config file.");
@@ -214,7 +214,7 @@ fn generate_completions<G: Generator>(gen: G) {
 fn trashing(files: Vec<PathBuf>, trash_dir: String, args: Args) {
     for file in files {
         if file.exists() {
-            let path_to_trash = vec![
+            let path_to_trash = [
                 trash_dir.clone(),
                 file.file_name().unwrap().to_str().unwrap().to_string(),
             ]
@@ -222,7 +222,7 @@ fn trashing(files: Vec<PathBuf>, trash_dir: String, args: Args) {
             if PathBuf::from(&path_to_trash).exists() {
                 let mut i = 1;
                 loop {
-                    let path_to_trash = vec![
+                    let path_to_trash = [
                         trash_dir.clone(),
                         file.file_name().unwrap().to_str().unwrap().to_string(),
                         i.to_string(),
@@ -251,36 +251,28 @@ fn trashing(files: Vec<PathBuf>, trash_dir: String, args: Args) {
 
                     match fs::rename(
                         &file,
-                        String::from(
-                            trash_dir.clone()
-                                + "/"
-                                + &file.file_name().unwrap().to_str().unwrap()
-                                + "/",
-                        ),
+                        trash_dir.clone()
+                            + "/"
+                            + file.file_name().unwrap().to_str().unwrap()
+                            + "/",
                     ) {
                         Ok(_) => continue,
                         Err(e) => eprintln!("Error moving directory: {}", e),
                     }
                 }
+            } else if args.force {
+                fs::remove_file(&file).unwrap();
             } else {
-                if args.force {
-                    fs::remove_file(&file).unwrap();
-                } else {
-                    match fs::rename(
-                        &file,
-                        String::from(
-                            trash_dir.clone() + &file.file_name().unwrap().to_str().unwrap(),
-                        ),
-                    ) {
-                        Ok(_) => continue,
-                        Err(e) => eprintln!(
-                            "Error moving file: {} {}",
-                            e,
-                            String::from(
-                                trash_dir.clone() + &file.file_name().unwrap().to_str().unwrap(),
-                            ),
-                        ),
-                    }
+                match fs::rename(
+                    &file,
+                    trash_dir.clone() + file.file_name().unwrap().to_str().unwrap(),
+                ) {
+                    Ok(_) => continue,
+                    Err(e) => eprintln!(
+                        "Error moving file: {} {}",
+                        e,
+                        trash_dir.clone() + file.file_name().unwrap().to_str().unwrap(),
+                    ),
                 }
             }
         } else {
