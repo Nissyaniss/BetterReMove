@@ -17,15 +17,29 @@ struct Config {
 
 impl Default for Config {
 	fn default() -> Self {
-		let Ok(home_dir) = env::var("HOME") else {
-			eprintln!("Error getting home directory. Check your configuration file or create the environment variable named $HOME with your home path in it.");
+		let home_dir: String;
+		if !cfg!(windows) {
+			home_dir = match env::var("HOME") {
+				Ok(home_dir) => home_dir,
+				Err(e) => panic!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}"),
+			};
+			let home_dir = PathBuf::from(home_dir);
+			Config {
+				path_to_trash: home_dir.join(".local/share/BetterReMove/trash/"),
+			}
+		} else if cfg!(windows) {
+			home_dir = match env::var("UserProfile") {
+				Ok(home_dir) => home_dir,
+				Err(e) => panic!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}"),
+			};
+			let home_dir = PathBuf::from(home_dir);
+			Config {
+				path_to_trash: home_dir.join(r".BetterReMove\trash\"),
+			}
+		} else {
 			return Self {
 				path_to_trash: PathBuf::from("null"),
 			};
-		};
-		let home_dir = PathBuf::from(home_dir);
-		Config {
-			path_to_trash: home_dir.join(".local/share/BetterReMove/trash/"),
 		}
 	}
 }
@@ -79,9 +93,21 @@ struct Args {
 fn main() {
 	let args = Args::parse();
 	let files = args.paths.clone();
-	let Ok(home_dir) = env::var("HOME") else {
-		panic!("Error getting home directory. Create the environment variable named $HOME with your home path in it.");
-	};
+	let home_dir: String;
+	if !cfg!(windows) {
+		home_dir = match env::var("HOME") {
+			Ok(home_dir) => home_dir,
+			Err(e) => panic!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}"),
+		};
+	} else if cfg!(windows) {
+		home_dir = match env::var("UserProfile") {
+			Ok(home_dir) => home_dir,
+			Err(e) => panic!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}"),
+		};
+	} else {
+		panic!("Critical error getting home directory.");
+	}
+
 	let home_dir = PathBuf::from(home_dir);
 	let config_file = home_dir.join(".config/BetterReMove/config.toml");
 	let trash_dir = check_config(&config_file);
@@ -249,8 +275,7 @@ fn trashing(files: Vec<PathBuf>, trash_dir: &Path, args: &Args) {
 
 					match fs::rename(
 						&file,
-						trash_dir
-							.join(file.file_name().unwrap().to_str().unwrap()),
+						trash_dir.join(file.file_name().unwrap().to_str().unwrap()),
 					) {
 						Ok(()) => continue,
 						Err(e) => eprintln!("Error moving directory: {e}"),
@@ -261,8 +286,7 @@ fn trashing(files: Vec<PathBuf>, trash_dir: &Path, args: &Args) {
 			} else {
 				match fs::rename(
 					&file,
-					trash_dir
-						.join(file.file_name().unwrap().to_str().unwrap()),
+					trash_dir.join(file.file_name().unwrap().to_str().unwrap()),
 				) {
 					Ok(()) => continue,
 					Err(e) => eprintln!(
