@@ -85,10 +85,7 @@ I will love to do so but like said above this is my first Rust project and the c
 
 ## Planned things to do
 
-This is in order of importance
-
-- [ ] Make the code great again
-- [ ] Make the cli more *pretty*
+- [x] Make the code great again (i think its done)
 - [ ] Windows support
 - [ ] `fzf` integration
 - [ ] Restore files to their original place
