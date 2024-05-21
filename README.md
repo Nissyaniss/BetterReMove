@@ -88,7 +88,7 @@ I will love to do so but like said above this is my first Rust project and the c
 This is in order of importance
 
 - [ ] Make the code great again
-- [ ] Make the cli more *~pretty~*
+- [ ] Make the cli more *pretty*
 - [ ] Windows support
 - [ ] `fzf` integration
 - [ ] Restore files to their original place
