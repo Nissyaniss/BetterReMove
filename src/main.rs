@@ -10,6 +10,8 @@ use std::{
 	path::PathBuf,
 };
 use toml::Value;
+extern crate skim;
+use skim::prelude::*;
 
 struct Config {
 	path_to_trash: PathBuf,
@@ -46,6 +48,7 @@ impl Default for Config {
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
+#[allow(clippy::struct_excessive_bools)]
 struct Args {
 	#[arg(
 		short = 't',
@@ -86,13 +89,16 @@ struct Args {
 	)]
 	force: bool,
 
+	#[arg(long = "fzf", help = "Display files in fzf")]
+	fzf: bool,
+
 	#[arg(help = "Files to remove")]
 	paths: Vec<PathBuf>,
 }
 
 fn main() {
 	let args = Args::parse();
-	let files = args.paths.clone();
+	let mut files = args.paths.clone();
 	let home_dir: String;
 	if !cfg!(windows) {
 		home_dir = match env::var("HOME") {
@@ -167,6 +173,20 @@ fn main() {
 		let new_config = format!("path_to_trash = '{new_trash_path}'");
 		fs::write(config_file, new_config).unwrap();
 		return;
+	}
+
+//WTF
+
+	if args.fzf {
+		let options = SkimOptionsBuilder::default().multi(true).build().unwrap();
+
+		let selected_items = Skim::run_with(&options, None)
+			.map(|out| out.selected_items)
+			.unwrap_or_else(|| Vec::new());
+
+		for item in selected_items.iter() {
+			print!("{}{}", item.output(), "\n");
+		}
 	}
 
 	trashing(files, &trash_dir, &args);
