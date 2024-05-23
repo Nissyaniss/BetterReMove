@@ -1,6 +1,7 @@
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, Generator, Shell};
 use dialoguer::Confirm;
+use skim::prelude::*;
 use std::env;
 use std::fs::File;
 use std::io;
@@ -10,8 +11,6 @@ use std::{
 	path::PathBuf,
 };
 use toml::Value;
-extern crate skim;
-use skim::prelude::*;
 
 struct Config {
 	path_to_trash: PathBuf,
@@ -175,7 +174,7 @@ fn main() {
 		return;
 	}
 
-//WTF
+	//WTF
 
 	if args.fzf {
 		let options = SkimOptionsBuilder::default().multi(true).build().unwrap();
@@ -185,7 +184,7 @@ fn main() {
 			.unwrap_or_else(|| Vec::new());
 
 		for item in selected_items.iter() {
-			print!("{}{}", item.output(), "\n");
+			files.push(PathBuf::from(item.text().into_owned()));
 		}
 	}
 
