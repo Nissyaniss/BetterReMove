@@ -6,10 +6,8 @@ use std::env;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use std::{
-	fs::{self},
-	path::PathBuf,
-};
+use std::process::exit;
+use std::{fs, path::PathBuf};
 use toml::Value;
 
 struct Config {
@@ -22,19 +20,25 @@ impl Default for Config {
 		if !cfg!(windows) {
 			home_dir = match env::var("HOME") {
 				Ok(home_dir) => home_dir,
-				Err(e) => panic!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}"),
+				Err(e) => {
+					eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
+					exit(1);
+				}
 			};
 			let home_dir = PathBuf::from(home_dir);
-			Config {
+			Self {
 				path_to_trash: home_dir.join(".local/share/BetterReMove/trash/"),
 			}
 		} else if cfg!(windows) {
 			home_dir = match env::var("UserProfile") {
 				Ok(home_dir) => home_dir,
-				Err(e) => panic!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}"),
+				Err(e) => {
+					eprintln!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}");
+					exit(1);
+				}
 			};
 			let home_dir = PathBuf::from(home_dir);
-			Config {
+			Self {
 				path_to_trash: home_dir.join(r".BetterReMove\trash\"),
 			}
 		} else {
@@ -53,7 +57,7 @@ struct Args {
 		short = 't',
 		long = "trash-path",
 		help = "Reveal the trash path",
-		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "delete_trash_contents"]
+		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "delete_trash_contents", "fzf"]
 	)]
 	trash_path_reveal: bool,
 
@@ -61,14 +65,14 @@ struct Args {
 		short = 'd',
 		long = "delete-trash-contents",
 		help = "Deletes the trash's contents",
-		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "trash_path_reveal"]
+		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "trash_path_reveal", "fzf"]
 	)]
 	delete_trash_contents: bool,
 
 	#[arg(
 		long = "set-trash-path",
 		value_name = "path",
-		conflicts_with_all = &["force", "trash_path_reveal", "paths", "generate_completions", "delete_trash_contents"],
+		conflicts_with_all = &["force", "trash_path_reveal", "paths", "generate_completions", "delete_trash_contents", "fzf"],
 		help = "Files to remove"
 	)]
 	new_trash_path: Option<PathBuf>,
@@ -76,7 +80,7 @@ struct Args {
 	#[arg(
 		long = "generate-completions",
 		value_name = "SHELL",
-		conflicts_with_all = &["force", "trash_path_reveal", "paths", "new_trash_path", "delete_trash_contents"],
+		conflicts_with_all = &["force", "trash_path_reveal", "paths", "new_trash_path", "delete_trash_contents", "fzf"],
 		help = "Generate shell completions"
 	)]
 	generate_completions: Option<Shell>,
@@ -88,7 +92,7 @@ struct Args {
 	)]
 	force: bool,
 
-	#[arg(long = "fzf", help = "Display files in fzf")]
+	#[arg(long = "fzf", help = "Display files in fzf", conflicts_with = "paths")]
 	fzf: bool,
 
 	#[arg(help = "Files to remove")]
@@ -102,15 +106,22 @@ fn main() {
 	if !cfg!(windows) {
 		home_dir = match env::var("HOME") {
 			Ok(home_dir) => home_dir,
-			Err(e) => panic!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}"),
+			Err(e) => {
+				eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
+				exit(1);
+			}
 		};
 	} else if cfg!(windows) {
 		home_dir = match env::var("UserProfile") {
 			Ok(home_dir) => home_dir,
-			Err(e) => panic!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}"),
+			Err(e) => {
+				eprintln!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}");
+				exit(1);
+			}
 		};
 	} else {
-		panic!("Critical error getting home directory.");
+		eprintln!("Critical error getting home directory.");
+		exit(1);
 	}
 
 	let home_dir = PathBuf::from(home_dir);
@@ -163,7 +174,7 @@ fn main() {
 		return;
 	}
 
-	if args.new_trash_path.clone().is_some() {
+	if args.new_trash_path.is_some() {
 		if args.new_trash_path.clone().unwrap().is_file() {
 			println!("The new trash path must be a directory.");
 			return;
@@ -174,16 +185,13 @@ fn main() {
 		return;
 	}
 
-	//WTF
-
 	if args.fzf {
 		let options = SkimOptionsBuilder::default().multi(true).build().unwrap();
 
-		let selected_items = Skim::run_with(&options, None)
-			.map(|out| out.selected_items)
-			.unwrap_or_else(|| Vec::new());
+		let selected_items =
+			Skim::run_with(&options, None).map_or_else(Vec::new, |out| out.selected_items);
 
-		for item in selected_items.iter() {
+		for item in &selected_items {
 			files.push(PathBuf::from(item.text().into_owned()));
 		}
 	}
@@ -195,10 +203,10 @@ fn check_config(config_file: &Path) -> PathBuf {
 	let default_config = Config::default();
 	let default_config_str = format!(
 		"path_to_trash = '{}'",
-		match default_config.path_to_trash.to_str() {
-			Some(s) => s,
-			None => panic!("Error getting default trash path"),
-		}
+		default_config
+			.path_to_trash
+			.to_str()
+			.map_or_else(|| panic!("Error getting default trash path"), |s| s)
 	);
 	if !config_file.exists() {
 		fs::create_dir_all(config_file.parent().unwrap()).unwrap();
@@ -252,12 +260,11 @@ fn check_config(config_file: &Path) -> PathBuf {
 
 fn generate_completions<G: Generator>(gen: G) {
 	let mut cmd = Args::command();
-	let bin_name = env::current_exe()
-		.expect("Failed to get binary name")
-		.file_name()
-		.expect("Failed to get binary name")
-		.to_string_lossy()
-		.to_string();
+	let Ok(bin_name) = env::current_exe() else {
+		eprintln!("Cannot get binary name");
+		exit(1);
+	};
+	let bin_name = bin_name.file_name().unwrap().to_string_lossy().to_string();
 	generate(gen, &mut cmd, &bin_name, &mut io::stdout());
 }
 
