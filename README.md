@@ -87,7 +87,7 @@ Are you sure you want to erase the trash ? [y/N]
 
 ### THERE IS CURRENTLY NO WAY TO RESTORE FILE TO THERE ORIGINAL PATH
 
-I will love to do so but like said above this is my first Rust project and the code is bad as it is, and i cannot see a solution involving a lot of work. But it is planned.
+I will love to do so but like said above this is my first Rust project and the code is bad as it is, and i cannot see a solution not involving a lot of rework. But it is planned.
 
 ## Note for windows users
 
