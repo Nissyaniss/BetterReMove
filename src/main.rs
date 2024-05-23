@@ -17,34 +17,16 @@ struct Config {
 impl Default for Config {
 	fn default() -> Self {
 		let home_dir: String;
-		if !cfg!(windows) {
-			home_dir = match env::var("HOME") {
-				Ok(home_dir) => home_dir,
-				Err(e) => {
-					eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
-					exit(1);
-				}
-			};
-			let home_dir = PathBuf::from(home_dir);
-			Self {
-				path_to_trash: home_dir.join(".local/share/BetterReMove/trash/"),
+		home_dir = match env::var("HOME") {
+			Ok(home_dir) => home_dir,
+			Err(e) => {
+				eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
+				exit(1);
 			}
-		} else if cfg!(windows) {
-			home_dir = match env::var("UserProfile") {
-				Ok(home_dir) => home_dir,
-				Err(e) => {
-					eprintln!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}");
-					exit(1);
-				}
-			};
-			let home_dir = PathBuf::from(home_dir);
-			Self {
-				path_to_trash: home_dir.join(r".BetterReMove\trash\"),
-			}
-		} else {
-			return Self {
-				path_to_trash: PathBuf::from("null"),
-			};
+		};
+		let home_dir = PathBuf::from(home_dir);
+		Self {
+			path_to_trash: home_dir.join(".local/share/BetterReMove/trash/"),
 		}
 	}
 }
@@ -103,26 +85,13 @@ fn main() {
 	let args = Args::parse();
 	let mut files = args.paths.clone();
 	let home_dir: String;
-	if !cfg!(windows) {
-		home_dir = match env::var("HOME") {
-			Ok(home_dir) => home_dir,
-			Err(e) => {
-				eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
-				exit(1);
-			}
-		};
-	} else if cfg!(windows) {
-		home_dir = match env::var("UserProfile") {
-			Ok(home_dir) => home_dir,
-			Err(e) => {
-				eprintln!("Error getting home directory. Create the environment variable named UserProfile with your home path in it. : {e}");
-				exit(1);
-			}
-		};
-	} else {
-		eprintln!("Critical error getting home directory.");
-		exit(1);
-	}
+	home_dir = match env::var("HOME") {
+		Ok(home_dir) => home_dir,
+		Err(e) => {
+			eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
+			exit(1);
+		}
+	};
 
 	let home_dir = PathBuf::from(home_dir);
 	let config_file = home_dir.join(".config/BetterReMove/config.toml");
