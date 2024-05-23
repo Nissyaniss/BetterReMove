@@ -2,9 +2,9 @@
 `brm` is a command line deletion tool to replace the default and unsafe `rm` (if I delete a file I will never recover it).
 The idea was stolen from [rip](https://github.com/nivekuil/rip) (so this README is heavily inspired from them).
 
-Deleted files are send by default to `$HOME/.local/share/BetterReMove/trash` (or `%UserProfile%\.BetterReMove\trash\` for Windows) you can change it via commands (see [Usage](https://github.com/Nissyaniss/BetterReMove#usage))
+Deleted files are send by default to `$HOME/.local/share/BetterReMove/trash`, you can change it via commands (see [Usage](https://github.com/Nissyaniss/BetterReMove#usage))
 
-**`brm` is only available for Linux and Windows (not extendly tested for the latter) at the moment. No MacOS version is planned at the moment (because i don't have anything to test on) (if you want to add it create a PR i will be happy to merge)**
+**`brm` is only available for Linux (not extendly tested for the latter) at the moment. No MacOS nor Windows version is planned at the moment (if you want to add it create a PR i will be happy to merge)**
 
 ## THIS IS MY FIRST RUST PROJECT BE INDULGENT I'M NOT SMART
 
@@ -18,10 +18,6 @@ $ mv brm /usr/local/bin
 ```
 
 **I hope i get to upload this onto the arch AUR repo but it is not the case at the moment**
-
-### Windows
-
-I actually doesn't fucking know even though my machine is on windows so you have the exe on the [release page](https://github.com/Nissyaniss/BetterReMove/releases) and you are on ur own, good luck. If you have any idea on how to do it hit me up i will do a proper tutorial in here.
 
 ## Usage
 
@@ -89,20 +85,15 @@ Are you sure you want to erase the trash ? [y/N]
 
 I will love to do so but like said above this is my first Rust project and the code is bad as it is, and i cannot see a solution not involving a lot of rework. But it is planned.
 
-## Note for windows users
-
-I didn't suceed to make that the trash is going in the actual recycle bin because either after 2h of researchs i didn't stumble on the solution or you require admin access wich is a nono. If you have any idea on how to do it hit me up.
-
 ## Planned things to do
 
 - [x] Make the code great again (i think its done)
-- [x] Windows support (not extendly tested so bugs might be encountered)
-- [ ] `fzf` integration
+- [x] `fzf` integration
 - [ ] Restore files to their original place
-- [ ] MacOS support ?
 
 ## Credit
 
 - [clap](https://github.com/clap-rs/clap) for all options, completions ect
 - [dialoguer](https://github.com/console-rs/dialoguer) for the [Y/N] questions
 - [toml](https://github.com/toml-rs/toml) for all things toml related
+- [skim](https://github.com/lotabout/skim) for the fzf integration
