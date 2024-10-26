@@ -3,7 +3,8 @@ use clap_complete::{generate, Generator};
 use dialoguer::Confirm;
 use skim::prelude::*;
 use std::env;
-use std::io;
+use std::fs::{File, OpenOptions};
+use std::io::{self, Write};
 use std::path::Path;
 use std::process::exit;
 use std::{fs, path::PathBuf};
@@ -111,9 +112,24 @@ fn generate_completions<G: Generator>(gen: G) {
 }
 
 fn trashing(files: Vec<PathBuf>, trash_dir: &Path, args: &Args) {
+    let home_dir = match env::var("HOME") {
+        Ok(home_dir) => home_dir,
+        Err(e) => {
+            eprintln!("Error getting home directory. Create the environment variable named $HOME with your home path in it. : {e}");
+            exit(1);
+        }
+    };
+    let home_dir = PathBuf::from(home_dir);
+    let restore_config_file = home_dir.join(".config/BetterReMove/original_path.toml");
+    if !restore_config_file.exists() {
+        fs::create_dir_all(restore_config_file.parent().unwrap()).unwrap();
+        File::create(&restore_config_file).unwrap();
+    }
+
     for file in files {
         if file.exists() {
             let path_to_trash = trash_dir.join(file.file_name().unwrap().to_str().unwrap());
+            let absolute_file_path = fs::canonicalize(&file).unwrap();
             if path_to_trash.exists() {
                 let mut i = 1;
                 loop {
@@ -125,6 +141,19 @@ fn trashing(files: Vec<PathBuf>, trash_dir: &Path, args: &Args) {
                         break;
                     }
                     i += 1;
+                }
+                let mut restore_file = OpenOptions::new()
+                    .append(true)
+                    .open(&restore_config_file)
+                    .unwrap();
+
+                if let Err(e) = writeln!(
+                    restore_file,
+                    "{} : {}",
+                    absolute_file_path.display(),
+                    file.file_name().unwrap().to_str().unwrap().to_owned() + &i.to_string()
+                ) {
+                    eprintln!("Couldn't write to file: {e}");
                 }
             } else if file.is_dir() {
                 let confirmed = Confirm::new()
@@ -171,3 +200,5 @@ fn trashing(files: Vec<PathBuf>, trash_dir: &Path, args: &Args) {
         }
     }
 }
+
+fn restore() {}
