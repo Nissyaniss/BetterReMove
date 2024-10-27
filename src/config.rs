@@ -28,7 +28,25 @@ impl Default for Config {
     }
 }
 
-pub fn check(config_file: &Path) -> PathBuf {
+fn check(config_file: &Path) {
+    if !config_file.exists() {
+        fs::create_dir_all(config_file.parent().unwrap()).unwrap();
+        let default_config = Config::default();
+        let default_config_str = format!(
+            "path_to_trash = '{}'",
+            default_config
+                .path_to_trash
+                .to_str()
+                .map_or_else(|| panic!("Error getting default trash path"), |s| s)
+        );
+
+        File::create(config_file).unwrap();
+        fs::write(config_file, default_config_str.clone()).unwrap();
+    }
+}
+
+pub fn get_trash_dir(config_file: &Path) -> PathBuf {
+    check(config_file);
     let default_config = Config::default();
     let default_config_str = format!(
         "path_to_trash = '{}'",
@@ -37,13 +55,6 @@ pub fn check(config_file: &Path) -> PathBuf {
             .to_str()
             .map_or_else(|| panic!("Error getting default trash path"), |s| s)
     );
-    if !config_file.exists() {
-        fs::create_dir_all(config_file.parent().unwrap()).unwrap();
-
-        File::create(config_file).unwrap();
-        fs::write(config_file, default_config_str.clone()).unwrap();
-    }
-
     let config_str = fs::read_to_string(config_file).unwrap();
     let parsed_config = config_str
         .parse::<Value>()
