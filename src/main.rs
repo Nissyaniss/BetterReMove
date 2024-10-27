@@ -7,6 +7,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, Write};
 use std::process::exit;
 use std::{fs, path::PathBuf};
+use toml::Value;
 use utils::Utils;
 
 mod args;
@@ -93,6 +94,11 @@ fn main() {
         }
     }
 
+    if !args.restored_files.is_empty() {
+        restore(&args.restored_files, &utils);
+        exit(0);
+    }
+
     trashing(files, &utils, &args);
 }
 
@@ -167,10 +173,53 @@ fn move_remove_file(force: bool, file: &PathBuf, utils: &Utils) {
 
     if let Err(e) = writeln!(
         restore_file,
-        "{} : {}",
-        absolute_file_path.display(),
-        file.file_name().unwrap().to_str().unwrap().to_owned() + &i.to_string()
+        "{} = '{}'",
+        file.file_name().unwrap().to_str().unwrap().to_owned() + &i.to_string(),
+        absolute_file_path.display()
     ) {
         eprintln!("Couldn't write to file: {e}");
+    }
+}
+
+fn restore(restore_files: &Vec<PathBuf>, utils: &Utils) {
+    for file in restore_files {
+        if utils.restore_config_file.exists() {
+            let config_str = fs::read_to_string(utils.restore_config_file.clone()).unwrap();
+            let mut parsed_config = config_str
+                .parse::<Value>()
+                .ok()
+                .and_then(|r| match r {
+                    Value::Table(table) => Some(table),
+                    _ => None,
+                })
+                .unwrap();
+            let file_name = file.file_name().unwrap().to_str().unwrap();
+            if parsed_config.get(file_name).is_some() {
+                let restore_path = PathBuf::from(
+                    parsed_config
+                        .get(file_name)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_string(),
+                );
+                if restore_path.exists() {
+                    println!(
+                        "File with the same name at the same place already exists ! {}",
+                        restore_path.display()
+                    );
+                    exit(1);
+                }
+                parsed_config.remove(file_name);
+                fs::rename(utils.trash_dir.join(file.as_path()), restore_path).unwrap();
+                let mut new_restore_config_file = String::new();
+                for (key, string) in parsed_config {
+                    new_restore_config_file += &format!("{key} = '{}'\n", string.as_str().unwrap());
+                }
+                fs::write(utils.restore_config_file.clone(), new_restore_config_file).unwrap();
+            } else {
+                println!("Restore path not found for {} !", file.display());
+            }
+        }
     }
 }
