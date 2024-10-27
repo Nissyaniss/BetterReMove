@@ -11,7 +11,7 @@ pub struct Args {
 		short = 't',
 		long = "trash-path",
 		help = "Reveal the trash path",
-		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "delete_trash_contents", "fzf", "restore"]
+		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "delete_trash_contents", "fzf", "to_be_resored_file"]
 	)]
     pub trash_path_reveal: bool,
 
@@ -19,7 +19,7 @@ pub struct Args {
 		short = 'd',
 		long = "delete-trash-contents",
 		help = "Deletes the trash's contents",
-		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "trash_path_reveal", "fzf", "restore"]
+		conflicts_with_all = &["force", "new_trash_path", "paths", "generate_completions", "trash_path_reveal", "fzf", "to_be_resored_file"]
 	)]
     pub delete_trash_contents: bool,
 
@@ -34,7 +34,7 @@ pub struct Args {
     #[arg(
 		long = "set-trash-path",
 		value_name = "path",
-		conflicts_with_all = &["force", "trash_path_reveal", "paths", "generate_completions", "delete_trash_contents", "fzf", "restore"],
+		conflicts_with_all = &["force", "trash_path_reveal", "paths", "generate_completions", "delete_trash_contents", "fzf", "to_be_resored_file"],
 		help = "Files to remove"
 	)]
     pub new_trash_path: Option<PathBuf>,
@@ -42,7 +42,7 @@ pub struct Args {
     #[arg(
 		long = "generate-completions",
 		value_name = "SHELL",
-		conflicts_with_all = &["force", "trash_path_reveal", "paths", "new_trash_path", "delete_trash_contents", "fzf", "restore"],
+		conflicts_with_all = &["force", "trash_path_reveal", "paths", "new_trash_path", "delete_trash_contents", "fzf", "to_be_resored_file"],
 		help = "Generate shell completions"
 	)]
     pub generate_completions: Option<Shell>,
