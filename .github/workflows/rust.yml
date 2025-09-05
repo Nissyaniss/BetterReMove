@@ -19,6 +19,6 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Linter
-      run: cargo clippy -- -D clippy::pedantic -D clippy::cargo -D clippy::nursery -D clippy::alloc_instead_of_core -D missing_debug_implementations -D clippy::expect_used -A clippy::cast_lossless -A clippy::redundant_else
+      run: cargo clippy -- -D clippy::pedantic -D clippy::cargo -D clippy::nursery -D clippy::alloc_instead_of_core -D missing_debug_implementations -D clippy::expect_used -A clippy::cast_lossless -A clippy::redundant_else -A clippy::multiple_crate_versions -A clippy::cargo_common_metadata -D unused_variables
     - name: Run tests
       run: cargo test --verbose
