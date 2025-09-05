@@ -9,8 +9,8 @@ clap = { version = "4.5.0", features = ["derive"] }
 dialoguer = "0.11.0"
 toml = "0.8.13"
 clap_complete = "4.5.2"
-skim = "*"
 homedir = "0.3.4"
+skim = "0.20.5"
 
 [dev-dependencies]
 anyhow = "1.0.79"
